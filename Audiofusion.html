@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioFusion</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        .song-list {
+            list-style: none;
+            padding: 0;
+        }
+        .song-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .song-item img {
+            height: 50px;
+            margin-right: 10px;
+        }
+        .metadata {
+            flex: 1;
+        }
+        button {
+            cursor: pointer;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        .remove-btn {
+            background-color: #ff9800;
+            color: white;
+        }
+        input, select {
+            margin: 10px 0;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AudioFusion</h1>
+        <div id="account-section">
+            <h2>Account Creation</h2>
+            <input type="text" id="username" placeholder="Enter your username">
+            <button onclick="createAccount()">Create Account</button>
+            <p id="account-message"></p>
+        </div>
+        
+        <div id="upload-section" style="display:none;">
+            <h2>Upload Music</h2>
+            <input type="text" id="song-title" placeholder="Song Title">
+            <input type="file" id="cover-art" accept="image/*">
+            <textarea id="song-metadata" placeholder="Enter song metadata"></textarea>
+            <button onclick="uploadSong()">Upload</button>
+        </div>
+
+        <div id="music-library" style="display:none;">
+            <h2>Music Library</h2>
+            <input type="text" id="search-bar" onkeyup="searchSongs()" placeholder="Search songs...">
+            <ul id="song-list" class="song-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        // Mock Server Globe and DataGuardians
+        let serverGlobe = [];
+        let persistentStorage = JSON.parse(localStorage.getItem('audioFusionSongs')) || [];
+
+        // Account creation
+        function createAccount() {
+            const username = document.getElementById('username').value;
+            if (username) {
+                document.getElementById('account-message').textContent = `Welcome, ${username}!`;
+                document.getElementById('account-section').style.display = 'none';
+                document.getElementById('upload-section').style.display = 'block';
+                document.getElementById('music-library').style.display = 'block';
+                simulateServer();
+            } else {
+                alert('Please enter a username.');
+            }
+        }
+
+        // Upload song
+        function uploadSong() {
+            const title = document.getElementById('song-title').value;
+            const coverArt = document.getElementById('cover-art').files[0];
+            const metadata = document.getElementById('song-metadata').value;
+
+            if (title && coverArt && metadata) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const song = {
+                        id: Date.now(),
+                        title,
+                        coverArt: e.target.result,
+                        metadata,
+                    };
+                    serverGlobe.push(song);
+                    saveToStorage(song);
+                    displaySongs();
+                };
+                reader.readAsDataURL(coverArt);
+            } else {
+                alert('Please fill all fields.');
+            }
+        }
+
+        // Save to persistent storage
+        function saveToStorage(song) {
+            persistentStorage.push(song);
+            localStorage.setItem('audioFusionSongs', JSON.stringify(persistentStorage));
+        }
+
+        // Display songs
+        function displaySongs() {
+            const songList = document.getElementById('song-list');
+            songList.innerHTML = '';
+            persistentStorage.forEach((song) => {
+                const listItem = document.createElement('li');
+                listItem.className = 'song-item';
+
+                const coverImg = document.createElement('img');
+                coverImg.src = song.coverArt;
+
+                const metadataDiv = document.createElement('div');
+                metadataDiv.className = 'metadata';
+                metadataDiv.innerHTML = `<strong>${song.title}</strong><br>${song.metadata}`;
+
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'delete-btn';
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteSong(song.id);
+
+                const removeButton = document.createElement('button');
+                removeButton.className = 'remove-btn';
+                removeButton.textContent = 'Remove Tune';
+                removeButton.onclick = () => removeTune(song.id);
+
+                listItem.appendChild(coverImg);
+                listItem.appendChild(metadataDiv);
+                listItem.appendChild(deleteButton);
+                listItem.appendChild(removeButton);
+
+                songList.appendChild(listItem);
+            });
+        }
+
+        // Search songs
+        function searchSongs() {
+            const query = document.getElementById('search-bar').value.toLowerCase();
+            const filteredSongs = persistentStorage.filter(song => 
+                song.title.toLowerCase().includes(query) || 
+                song.metadata.toLowerCase().includes(query)
+            );
+            document.getElementById('song-list').innerHTML = '';
+            filteredSongs.forEach(song => displaySongs());
+        }
+
+        // Delete song
+        function deleteSong(id) {
+            persistentStorage = persistentStorage.filter(song => song.id !== id);
+            localStorage.setItem('audioFusionSongs', JSON.stringify(persistentStorage));
+            displaySongs();
+        }
+
+        // Remove bad tune (mock feature)
+        function removeTune(id) {
+            alert('Tune removed (simulated).');
+        }
+
+        // Simulate Server Globe
+        function simulateServer() {
+            console.log('Server Globe: Pretending to be a real server...');
+        }
+
+        // Initialize library on load
+        displaySongs();
+    </script>
+</body>
+</html>
